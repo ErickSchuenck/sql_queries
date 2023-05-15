@@ -1,0 +1,8 @@
+sql
+  NAMES.DISPLAY_NAME as "Nome Completo",
+  PEOPLE.PERSON_NUMBER as "Numero Pessoal",
+  ASSIGNMENTS.ASSIGNMENT_NUMBER as "Matricula",
+  ******.HIRE_DATE as "Data de Admissao",
+  ******.NAME as "Cargo",
+  ******.AMOUNT as "Salário",
+  ******.REGISTRATION_NAME as "Empresa",
