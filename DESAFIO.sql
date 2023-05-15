@@ -9,24 +9,24 @@
 -- % de Reajuste entre Salário atual e Anterior
 
 SELECT
-    PPNF.PERSON_ID                                                                 AS "Id do funcionário",
-    PPNF.DISPLAY_NAME                                                              AS "Nome do funcionário",
+    PPNF.PERSON_ID AS "Id do funcionário",
+    PPNF.DISPLAY_NAME AS "Nome do funcionário",
     TO_CHAR(PPOS.DATE_START,
-    'DD/MM/YYYY')                                                                  AS "Data Efetiva",
-    PJOB.NAME                                                                      AS "Cargo Atual",
-    PREV_JOB.NAME                                                                  AS "Cargo Anterior",
-    CSAL.SALARY_AMOUNT                                                             AS "Salário",
-    PREV_CSAL.SALARY_AMOUNT                                                        AS "Salário Anterior",
+    'DD/MM/YYYY') AS "Data Efetiva",
+    PJOB.NAME AS "Cargo Atual",
+    PREV_JOB.NAME AS "Cargo Anterior",
+    CSAL.SALARY_AMOUNT AS "Salário",
+    PREV_CSAL.SALARY_AMOUNT AS "Salário Anterior",
     (CSAL.SALARY_AMOUNT - PREV_CSAL.SALARY_AMOUNT) / PREV_CSAL.SALARY_AMOUNT * 100 AS "Percentual de Diferença"
 FROM
-    PER_PERSON_NAMES_F     PPNF,
+    PER_PERSON_NAMES_F PPNF,
     PER_PERIODS_OF_SERVICE PPOS,
-    PER_ALL_ASSIGNMENTS_M  PAAM,
-    PER_JOBS               PJOB,
-    PER_ALL_ASSIGNMENTS_M  PREV_PAAM,
-    PER_JOBS               PREV_JOB,
-    CMP_SALARY             CSAL,
-    CMP_SALARY             PREV_CSAL
+    PER_ALL_ASSIGNMENTS_M PAAM,
+    PER_JOBS PJOB,
+    PER_ALL_ASSIGNMENTS_M PREV_PAAM,
+    PER_JOBS PREV_JOB,
+    CMP_SALARY CSAL,
+    CMP_SALARY PREV_CSAL
 WHERE
  --PASSAR ID DO FUNCIONÁRIO PARA A QUERY
     PPNF.PERSON_ID = NVL(:P_PERSON_ID,
@@ -83,3 +83,55 @@ WHERE
     AND PREV_CSAL.ASSIGNMENT_ID = PAAM.ASSIGNMENT_ID
     AND PREV_CSAL.PERSON_ID = PAAM.PERSON_ID
     AND PREV_CSAL.SALARY_APPROVED = 'Y'
+ ------------------------------
+ ------------------------------
+ ------------------------------
+ ------------------------------
+ ------------------------------
+ ------------------------------
+ ------------------------------
+    SELECT
+        PPNF.PERSON_ID AS "Id do funcionário",
+        CSAL.SALARY_AMOUNT AS "SALARIO",
+        PREV_CSAL.SALARY_AMOUNT AS "ANTERIOR"
+    FROM
+        PER_PERSON_NAMES_F PPNF,
+        CMP_SALARY CSAL,
+        CMP_SALARY PREV_CSAL,
+        PER_ALL_ASSIGNMENTS_M PAAM
+    WHERE
+        PPNF.PERSON_ID = NVL(:P_PERSON_ID,
+        PPNF.PERSON_ID)
+        AND PPNF.NAME_TYPE = 'GLOBAL'
+ -- CSAL
+        AND CSAL.DATE_TO = (
+            SELECT
+                MAX(DATE_TO)
+            FROM
+                CMP_SALARY CSAL_INNER
+            WHERE
+                CSAL_INNER.ASSIGNMENT_ID = PAAM.ASSIGNMENT_ID
+                AND CSAL_INNER.PERSON_ID = CSAL.PERSON_ID
+        )
+        AND CSAL.ASSIGNMENT_ID = PAAM.ASSIGNMENT_ID
+        AND CSAL.PERSON_ID = PAAM.PERSON_ID
+        AND CSAL.SALARY_APPROVED = 'Y'
+ -- PREV_CSAL
+        AND PREV_CSAL.DATE_TO = (
+            SELECT
+                MAX(DATE_TO)
+            FROM
+                CMP_SALARY PREV_CSAL_INNER
+            WHERE
+                PREV_CSAL_INNER.DATE_TO NOT IN (
+                    SELECT
+                        MAX(DATE_TO)
+                    FROM
+                        CMP_SALARY
+                )
+                AND PREV_CSAL_INNER.ASSIGNMENT_ID = PAAM.ASSIGNMENT_ID
+                AND PREV_CSAL_INNER.PERSON_ID = PREV_CSAL.PERSON_ID
+        )
+        AND PREV_CSAL.ASSIGNMENT_ID = PAAM.ASSIGNMENT_ID
+        AND PREV_CSAL.PERSON_ID = PAAM.PERSON_ID
+        AND PREV_CSAL.SALARY_APPROVED = 'Y'
